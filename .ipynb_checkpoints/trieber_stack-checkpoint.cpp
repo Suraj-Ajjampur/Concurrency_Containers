@@ -4,6 +4,8 @@
 // Includes
 
 // ABA problem during garbage collection
+// If the top
+
 
 //Races through Reclaimation
 //Reusing nodes might cause data races -- When the top->val might be reincarnated as a different type
@@ -38,7 +40,10 @@ public:
 };
 
 
-
+/** Pushes the value onto the stack
+ * 
+ * @param val integer to be added onto the stack
+ */
 /** Pushes the value onto the stack
  * 
  * @param val integer to be added onto the stack
@@ -60,6 +65,9 @@ void tstack::push(int val){
 }
 
 
+/** Returns the most recent push - recent is defined by linearizability
+ * 
+ */
 /** Returns the most recent pushed value - recent is defined by linearizability
  * 
  * @return The value of the popped node, or NULL if the stack is empty.
