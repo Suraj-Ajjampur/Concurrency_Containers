@@ -10,33 +10,8 @@
 
 //WE need to do a type presevind memory allocation
 
-#include<my_atomics.h>
 #include <cstddef>  // for std::uintptr_t
-
-/** Nonblocking data structure which is linearizable and Lock-free
- * 
- */
-class tstack{
-public:
-    struct node{
-        atomic<int> val;    // Data variable of the node
-        atomic<node*> down; // This is like a next pointer of a node in LIFO
-        node(int v) : val(v), down(nullptr) {} // Constructor of node
-    };
-    
-    // This struct will hold both the pointer to the top node and the ABA counter.
-    struct alignas(16) cnt_ptr {
-        node* ptr;
-        unsigned long count;
-    };
-    
-    atomic<cnt_ptr> top; // Now an atomic cnt_ptr, not just a pointer to node
-
-    void push(int val); 
-    int pop();
-};
-
-
+#include "trieber_stack.h"
 
 /** Pushes the value onto the stack
  * 
@@ -45,17 +20,13 @@ public:
 void tstack::push(int val){
     // Creating a new node and attempting to push it onto the stack
     node* n = new node(val);
-    cnt_ptr old_top;
-    cnt_ptr new_top;
+    node* old_top;
     do {
-        old_top = top.load(std::memory_order_acquire); // Load the current value of top
-        n->down.store(old_top.ptr, std::memory_order_relaxed); // Set the new node's next pointer to the current top
-        new_top.ptr = n; // Prepare the new top value with the new node
-        new_top.count = old_top.count + 1; // Increment the counter to address the ABA problem
-
+        old_top = top.load(ACQUIRE); // Load the current value of top
+        n->down.store(old_top, RELAXED); // Set the new node's next pointer to the current top
         // Attempt to swap the old top with the new top.
         // If another thread has modified the top, the CAS will fail and retry.
-    } while(!cas(top, old_top, new_top, std::memory_order_acq_rel)); // This is the linearization point of push
+    } while(!cas(top, old_top, n, ACQ_REL)); // This is the linearization point of push
 }
 
 
@@ -64,28 +35,92 @@ void tstack::push(int val){
  * @return The value of the popped node, or NULL if the stack is empty.
  */
 int tstack::pop(void){
-    cnt_ptr old_top;
-    cnt_ptr new_top;
+    node* t;
+    node* n;
     int v;
     do {
-        old_top = top.load(std::memory_order_acquire); // Load the current value of top
+        t = top.load(ACQUIRE); // Load the current value of top
 
-        if(old_top.ptr == nullptr){ 
-            return NULL; // Stack is empty, return NULL
+        if(t == nullptr){ 
+            return -1; // Stack is empty, return NULL
         }
-        
-        node* next_node = old_top.ptr->down.load(std::memory_order_relaxed); // Get the next node
-        v = old_top.ptr->val.load(std::memory_order_relaxed); // Read the value from the current top node
-        new_top.ptr = next_node; // Update the new top to the next node
-        new_top.count = old_top.count + 1; // Increment the counter to address the ABA problem
-
+        n = t->down.load(RELAXED); // Get the next node
+        v = t->val.load(RELAXED); // Read the value from the current top node
         // Attempt to swap the old top with the new top.
         // If another thread has modified the top, the CAS will fail and retry.
-    } while(!cas(top, old_top, new_top, std::memory_order_acq_rel)); // This is the linearization point of pop
+    } while(!cas(top, t, n, ACQ_REL)); // This is the linearization point of pop
 
     // Memory reclamation should be performed here.
-    delete old_top
+    delete t;
     // Delete the old node after ensuring no other threads are accessing it.
     return v; // Return the value of the popped node
 }
 
+void push3_pop_till_empty(void){
+    /************ Testing for the Trieber Stack here **********/
+    tstack stack; // Create an instance of tstack
+
+    // Test the push function
+    std::cout << "Pushing values onto the stack..." << std::endl;
+    stack.push(1);
+    stack.push(2);
+    stack.push(3);
+
+    // Test the pop function
+    std::cout << "Popping values from the stack till empty..." << std::endl;
+    int val;
+    while ((val = stack.pop()) != -1) { // Continue popping until the stack is empty
+        std::cout << "Popped: " << val << std::endl;
+    }
+}
+
+void push_pop(void){
+    /************ Testing for the Trieber Stack here **********/
+    tstack stack; // Create an instance of tstack
+
+    // Test the push function
+    std::cout << "Pushing then popping alternatively" << std::endl;
+    stack.push(1);
+    cout << "Value is " << stack.pop() << endl;
+    stack.push(2);
+    cout << "Value is " << stack.pop() << endl;
+    stack.push(3);
+    cout << "Value is " << stack.pop() << endl;
+}
+
+void concurrentPush(tstack& stack, int val) {
+    stack.push(val);
+}
+
+void concurrentPop(tstack& stack, std::atomic<int>& popCount) {
+    if (stack.pop() != -1) {
+        popCount.fetch_add(1, std::memory_order_relaxed);
+    }
+}
+
+void testConcurrentPushPop() {
+    tstack stack;
+    const int numOperations = 100;
+    std::atomic<int> popCount(0);
+    std::vector<std::thread> threads;
+
+    // Create threads to perform concurrent pushes
+    for (int i = 0; i < numOperations; ++i) {
+        threads.push_back(std::thread(concurrentPush, std::ref(stack), i));
+    }
+
+    // Create threads to perform concurrent pops
+    for (int i = 0; i < numOperations; ++i) {
+        threads.push_back(std::thread(concurrentPop, std::ref(stack), std::ref(popCount)));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    // Check if the number of successful pops matches the number of pushes
+    assert(popCount == numOperations);
+
+    std::cout << "Test Concurrent Push Pop: Passed" << std::endl;
+}

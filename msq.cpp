@@ -10,28 +10,14 @@
 
 #include "msq.h"
 
-class msqueue{
-    public:
-        class node{
-            public:
-                node(int v):val(v){}
-                int val; atomic<node*> next;
-                };
-        atomic<node*> head, tail;
-        msqueue();
-        void enqueue(int val);
-        int dequeue();
-        };
-
-
-        //Constructor 
-        msqueue::msqueue(){
-        // We initialize a node pointing to dummy
-        node* dummy = new node(DUMMY);
-        // We have head and tail point to dummy
-        head.store(dummy);
-        tail.store(dummy);
-};
+// Constructor
+msqueue::msqueue() {
+    // We initialize a node pointing to dummy
+    node* dummy = new node(DUMMY);
+    // We have head and tail point to dummy
+    head.store(dummy);
+    tail.store(dummy);
+}
 
 /** 
  * Make sure tail is up-to-date
@@ -78,7 +64,7 @@ int msqueue::dequeue(){
             //Check of the list is empty
             if(h==t){
                 //Step 2 if empty, return
-                if(n==NULL){return NULL;}
+                if(n==NULL){return -1;}
                 //Else cas tail to be head's next node
                 else{cas(tail,t,n,ACQ_REL);}
             }
@@ -89,4 +75,60 @@ int msqueue::dequeue(){
             }
         }
     }
+}
+
+void testBasicQueueOperations() {
+    msqueue queue;
+
+    // Enqueue elements
+    queue.enqueue(1);
+    queue.enqueue(2);
+    queue.enqueue(3);
+
+    // Dequeue and check elements
+    assert(queue.dequeue() == 1);
+    assert(queue.dequeue() == 2);
+    assert(queue.dequeue() == 3);
+
+    // Queue should be empty now
+    assert(queue.dequeue() == -1);
+
+    std::cout << "Test Basic Queue Operations: Passed" << std::endl;
+}
+
+void concurrentEnqueue(msqueue& queue, int val) {
+    queue.enqueue(val);
+}
+
+void concurrentDequeue(msqueue& queue, std::atomic<int>& sum) {
+    int val = queue.dequeue();
+    if (val != -1) {
+        sum.fetch_add(val, std::memory_order_relaxed);
+    }
+}
+
+void testConcurrentuQeueOperations() {
+    msqueue queue;
+    std::atomic<int> sum(0);
+    std::vector<std::thread> threads;
+
+    // Start threads to perform concurrent enqueues
+    for (int i = 1; i <= 5; ++i) {
+        threads.push_back(std::thread(concurrentEnqueue, std::ref(queue), i));
+    }
+
+    // Start threads to perform concurrent dequeues
+    for (int i = 0; i < 5; ++i) {
+        threads.push_back(std::thread(concurrentDequeue, std::ref(queue), std::ref(sum)));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    // Check if the sum of dequeued values is correct
+    assert(sum == 15);
+
+    std::cout << "Test Concurrent Queue Operations: Passed" << std::endl;
 }

@@ -9,13 +9,23 @@
 
 #include "trieber_stack.h"
 #include "msq.h"
+#include "sgl.h"
+#include <iostream>
 
 int main(void){
+    push3_pop_till_empty();
+    push_pop();
+
+    testBasicQueueOperations();
+    testConcurrentuQeueOperations();
     
-    /************ Testing for the Trieber Stack here **********/
+    testConcurrentPushPop();
     
+    testBasicSGLStackOperations();
+    testConcurrentSGLStackOperations();
     /*********** Testing for MSQueue here **********************/
     
     /************ Elimination here *****************************/
     return 0;
 }
+

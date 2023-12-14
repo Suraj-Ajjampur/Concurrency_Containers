@@ -56,8 +56,17 @@ void ticket_unlock(atomic<int>& now_serving);
 
 int fai(atomic<int>& x, int amount, std::memory_order MEM);
 
+/** Atomically check if the old value is what you expect, if it is, replace it
+ * with a new value and indicate success.
+ * 
+ * @return Bool to indicate if the expected value is equal to the desired value.
+ */ 
 template <typename T>
-bool cas(atomic<T>& x, T expected, T desired, std::memory_order MEM);
+bool cas(atomic<T>& x, T expected, T desired, std::memory_order MEM){
+ T expected_ref = expected;
+ //compare_exchange_strong changes the value from expected_ref to desired
+ return x.compare_exchange_strong(expected_ref, desired, MEM); 
+}
 
 template <typename T>
 T vcas(atomic<T>& x, T expected, T desired, std::memory_order MEM);
