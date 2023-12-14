@@ -7,6 +7,7 @@
  * 
  * @date 5 Dec 2023
 ********************************************************************/
+
 #include "msq.h"
 
 class msqueue{
@@ -22,6 +23,7 @@ class msqueue{
         int dequeue();
         };
 
+
         //Constructor 
         msqueue::msqueue(){
         // We initialize a node pointing to dummy
@@ -33,12 +35,14 @@ class msqueue{
 
 /** 
  * Make sure tail is up-to-date
+
  * Add new node (linearization point)
  * Update the 
  * 
  * @param val to be enqueued
  */ 
 void msqueue::enqueue(int val){
+
     // t is a copy of the tail pointer
     // e is the expected value of next pointer of the current tail
     // n is the new node
