@@ -20,6 +20,7 @@
  * 
  */
 class tstack{
+
 public:
     struct node{
         atomic<int> val;    // Data variable of the node
@@ -44,6 +45,7 @@ public:
  * 
  * @param val integer to be added onto the stack
  */
+
 /** Pushes the value onto the stack
  * 
  * @param val integer to be added onto the stack
@@ -64,10 +66,6 @@ void tstack::push(int val){
     } while(!cas(top, old_top, new_top, std::memory_order_acq_rel)); // This is the linearization point of push
 }
 
-
-/** Returns the most recent push - recent is defined by linearizability
- * 
- */
 /** Returns the most recent pushed value - recent is defined by linearizability
  * 
  * @return The value of the popped node, or NULL if the stack is empty.
@@ -97,4 +95,5 @@ int tstack::pop(void){
     // Delete the old node after ensuring no other threads are accessing it.
     return v; // Return the value of the popped node
 }
+
 

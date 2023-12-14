@@ -13,7 +13,6 @@
 #include<my_atomics.h>
 #include <cstddef>  // for std::uintptr_t
 
-
 /** Nonblocking data structure which is linearizable and Lock-free
  * 
  */
