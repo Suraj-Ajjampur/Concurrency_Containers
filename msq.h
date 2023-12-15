@@ -21,6 +21,6 @@ public:
 };
 
 void testBasicQueueOperations();
-void testConcurrentuQeueOperations();
+void testConcurrentQueueOperations();
 
 #endif //MSQ_H

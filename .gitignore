@@ -26,8 +26,12 @@
 *.a
 *.lib
 
+# checkpoint files
+.ipynb_checkpoints/*
+
 # Executables
 *.exe
 *.out
 *.app
+containers
 

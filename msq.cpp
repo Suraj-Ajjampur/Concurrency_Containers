@@ -9,6 +9,11 @@
 ********************************************************************/
 
 #include "msq.h"
+#include <mutex>
+
+mutex lock;
+
+#define CONTENTION_OPT 1
 
 // Constructor
 msqueue::msqueue() {
@@ -71,7 +76,11 @@ int msqueue::dequeue(){
             //Step 2 Else upate head (linearization point, old head becomes dummy)
             else{
             int ret=n->val;
+            #if CONTENTION_OPT == 0
             if(cas(head,h,n,ACQ_REL)){return ret;}
+            #else
+            if(head.load(ACQUIRE) == h && cas(head,h,n,ACQ_REL)){return ret;}
+            #endif
             }
         }
     }
@@ -98,27 +107,36 @@ void testBasicQueueOperations() {
 
 void concurrentEnqueue(msqueue& queue, int val) {
     queue.enqueue(val);
+    cout << "Enqued value is " << val << endl;
 }
 
 void concurrentDequeue(msqueue& queue, std::atomic<int>& sum) {
     int val = queue.dequeue();
+
     if (val != -1) {
-        sum.fetch_add(val, std::memory_order_relaxed);
+        cout << "dequed value is " << val << endl;
+        sum.fetch_add(val, SEQ_CST);
     }
 }
 
-void testConcurrentuQeueOperations() {
+void testConcurrentQueueOperations() {
     msqueue queue;
     std::atomic<int> sum(0);
     std::vector<std::thread> threads;
 
     // Start threads to perform concurrent enqueues
-    for (int i = 1; i <= 5; ++i) {
+    for (int i = 1; i <= 100; i++) {
         threads.push_back(std::thread(concurrentEnqueue, std::ref(queue), i));
     }
 
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+    threads.clear();  // Clear the vector of threads
+
     // Start threads to perform concurrent dequeues
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 100; i++) {
         threads.push_back(std::thread(concurrentDequeue, std::ref(queue), std::ref(sum)));
     }
 
@@ -127,8 +145,10 @@ void testConcurrentuQeueOperations() {
         t.join();
     }
 
+    cout << sum << endl;
+
     // Check if the sum of dequeued values is correct
-    assert(sum == 15);
+    assert(sum == 5050);
 
     std::cout << "Test Concurrent Queue Operations: Passed" << std::endl;
 }

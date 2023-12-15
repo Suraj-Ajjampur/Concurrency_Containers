@@ -13,6 +13,8 @@
 #include <cstddef>  // for std::uintptr_t
 #include "trieber_stack.h"
 
+#define CONTENTION_OPT 1
+
 /** Pushes the value onto the stack
  * 
  * @param val integer to be added onto the stack
@@ -26,7 +28,11 @@ void tstack::push(int val){
         n->down.store(old_top, RELAXED); // Set the new node's next pointer to the current top
         // Attempt to swap the old top with the new top.
         // If another thread has modified the top, the CAS will fail and retry.
+#if CONTENTION_OPT == 0
     } while(!cas(top, old_top, n, ACQ_REL)); // This is the linearization point of push
+#else
+    } while(top.load(ACQUIRE) == old_top && !cas(top, old_top, n, ACQ_REL));
+#endif   
 }
 
 
@@ -48,8 +54,11 @@ int tstack::pop(void){
         v = t->val.load(RELAXED); // Read the value from the current top node
         // Attempt to swap the old top with the new top.
         // If another thread has modified the top, the CAS will fail and retry.
+#if CONTENTION_OPT == 0
     } while(!cas(top, t, n, ACQ_REL)); // This is the linearization point of pop
-
+#else 
+    } while(top.load(ACQUIRE) == t && !cas(top, t, n, ACQ_REL));
+#endif
     // Memory reclamation should be performed here.
     delete t;
     // Delete the old node after ensuring no other threads are accessing it.
