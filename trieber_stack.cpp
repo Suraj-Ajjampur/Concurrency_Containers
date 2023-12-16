@@ -15,8 +15,9 @@
 #include <cstddef>  // for std::uintptr_t
 #include "trieber_stack.h"
 
-#define CONTENTION_OPT 1
+#define CONTENTION_OPT 0
 
+using namespace std;
 /** Pushes the value onto the stack
  * 
  * @param val integer to be added onto the stack
@@ -34,7 +35,8 @@ void tstack::push(int val){
     } while(!cas(top, old_top, n, ACQ_REL)); // This is the linearization point of push
 #else
     } while(top.load(ACQUIRE) == old_top && !cas(top, old_top, n, ACQ_REL));
-#endif   
+#endif
+    DEBUG_MSG(val);
 }
 
 
@@ -62,8 +64,9 @@ int tstack::pop(void){
     } while(top.load(ACQUIRE) == t && !cas(top, t, n, ACQ_REL));
 #endif
     // Memory reclamation should be performed here.
-    delete t;
+    //delete t;
     // Delete the old node after ensuring no other threads are accessing it.
+    DEBUG_MSG(v);
     return v; // Return the value of the popped node
 }
 
@@ -98,16 +101,17 @@ void push_pop(void){
     stack.push(3);
     cout << "Value is " << stack.pop() << endl;
 }
-
-void concurrentPush(tstack& stack, int val) {
+void Push(tstack& stack, int val) {
     stack.push(val);
 }
 
-void concurrentPop(tstack& stack, std::atomic<int>& popCount) {
-    if (stack.pop() != -1) {
-        popCount.fetch_add(1, std::memory_order_relaxed);
-    }
+void Pop(tstack& stack, std::atomic<int>& popCount) {
+    int val = stack.pop();
+    if ( val != -1) {
+        popCount.fetch_add(1, RELAXED);
+    }else{cout <<"Stack is empty Error" << endl;}
 }
+
 
 void testConcurrentPushPop() {
     tstack stack;
@@ -117,12 +121,12 @@ void testConcurrentPushPop() {
 
     // Create threads to perform concurrent pushes
     for (int i = 0; i < numOperations; ++i) {
-        threads.push_back(std::thread(concurrentPush, std::ref(stack), i));
+        threads.push_back(std::thread(Push, std::ref(stack), i));
     }
 
     // Create threads to perform concurrent pops
     for (int i = 0; i < numOperations; ++i) {
-        threads.push_back(std::thread(concurrentPop, std::ref(stack), std::ref(popCount)));
+        threads.push_back(std::thread(Pop, std::ref(stack), std::ref(popCount)));
     }
 
     // Wait for all threads to complete
@@ -135,3 +139,57 @@ void testConcurrentPushPop() {
 
     std::cout << "Test Concurrent Push Pop: Passed" << std::endl;
 }
+
+/** Test for Treiber Stack where a vector of values are being pushed into the stack
+ * by multiple threads (numThreads) and being popped out of the stack concurrently
+ * with a chosen optimization. The test passes if the number of pushes are equal to the
+ * number of pops.
+ * 
+ * @param values The values to push onto the stack.
+ * @param optimization The optimization strategy used (not used in this function).
+ * @param numThreads The number of threads used for pushing and popping.
+ */ 
+void treiber_stack_test(std::vector<int>& values, int numThreads) {
+    tstack stack;
+    std::atomic<int> popCount(0);
+    std::vector<std::thread> threads;
+
+    // Half the threads for pushing, half for popping
+    int halfNumThreads = numThreads / 2;
+
+    // Create threads to perform concurrent pushes
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
+            for (int j = i; j < values.size(); j += halfNumThreads) {
+                Push(stack, values[j]);
+            }
+        }));
+    }
+
+    // // Wait for all threads to complete
+    // for (auto& t : threads) {
+    //     t.join();
+    // }
+    // threads.clear();  // Clear the vector of threads
+
+    DEBUG_MSG("Begin Pop");
+    // Create threads to perform concurrent pops
+    for (int i = 0; i < values.size(); ++i) {
+        threads.push_back(std::thread(Pop, std::ref(stack), std::ref(popCount)));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    // Check if the number of successful pops matches the number of pushes
+    if (popCount.load(RELAXED) != values.size()) {
+        std::cerr << "Error: The number of successful pops does not match the number of pushes." << std::endl;
+        std::cerr << "Pops: " << popCount << ", Pushes: " << values.size() << std::endl;
+        // Handle error
+    } else {
+        std::cout << "Test for Treiber stack passed with no optimization" << std::endl;
+    }
+}
+

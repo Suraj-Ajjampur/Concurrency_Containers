@@ -22,7 +22,7 @@
 #include <ctime>
 #include <mutex>
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 #define DEBUG_MSG(msg) \
     do { \

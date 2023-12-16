@@ -27,27 +27,6 @@ int SGLQueue::dequeue() {
     return ret;
 }
 
-
-void testBasicSGLQueueOperations() {
-    SGLQueue queue;
-
-    // Enqueue elements
-    queue.enqueue(1);
-    queue.enqueue(2);
-    queue.enqueue(3);
-
-    // Dequeue and check elements
-    assert(queue.dequeue() == 1);
-    assert(queue.dequeue() == 2);
-    assert(queue.dequeue() == 3);
-
-    // Queue should be empty now
-    assert(queue.dequeue() == -1); // Assuming -1 indicates an empty queue
-
-    std::cout << "Test Basic SGL Queue Operations: Passed" << std::endl;
-}
-
-
 void concurrentSGLQueueEnqueue(SGLQueue& queue, int val) {
     queue.enqueue(val);
 }
@@ -55,7 +34,7 @@ void concurrentSGLQueueEnqueue(SGLQueue& queue, int val) {
 void concurrentSGLQueueDequeue(SGLQueue& queue, std::atomic<int>& sum) {
     int val = queue.dequeue();
     if (val != -1) { // Assuming -1 indicates an empty queue
-        sum.fetch_add(val, std::memory_order_relaxed);
+        sum.fetch_add(val, RELAXED);
     }
 }
 
@@ -85,6 +64,28 @@ void testConcurrentSGLQueueOperations() {
     std::cout << "Test Concurrent SGL Queue Operations: Passed" << std::endl;
 }
 
+void testBasicSGLQueueOperations() {
+    SGLQueue queue;
+
+    // Enqueue elements
+    queue.enqueue(1);
+    queue.enqueue(2);
+    queue.enqueue(3);
+
+    // Dequeue and check elements
+    assert(queue.dequeue() == 1);
+    assert(queue.dequeue() == 2);
+    assert(queue.dequeue() == 3);
+
+    // Queue should be empty now
+    assert(queue.dequeue() == -1); // Assuming -1 indicates an empty queue
+
+    std::cout << "Test Basic SGL Queue Operations: Passed" << std::endl;
+}
+
+
+
+
 
 void SGLStack::push(int val) {
     std::lock_guard<std::mutex> lock(sgl);
@@ -101,32 +102,13 @@ int SGLStack::pop() {
     return ret;
 }
 
-void testBasicSGLStackOperations() {
-    SGLStack stack;
-
-    // Push elements
-    stack.push(1);
-    stack.push(2);
-    stack.push(3);
-
-    // Pop and check elements
-    assert(stack.pop() == 3);
-    assert(stack.pop() == 2);
-    assert(stack.pop() == 1);
-
-    // Stack should be empty now
-    assert(stack.pop() == -1); // Assuming -1 indicates an empty stack
-
-    std::cout << "Test Basic SGL Stack Operations: Passed" << std::endl;
-}
-
 void concurrentSGLStackPush(SGLStack& stack, int val) {
     stack.push(val);
 }
 
 void concurrentSGLStackPop(SGLStack& stack, std::atomic<int>& popCount) {
     if (stack.pop() != -1) {
-        popCount.fetch_add(1, std::memory_order_relaxed);
+        popCount.fetch_add(1, RELAXED);
     }
 }
 

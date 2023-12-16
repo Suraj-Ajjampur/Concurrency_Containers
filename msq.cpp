@@ -119,7 +119,7 @@ void concurrentDequeue(msqueue& queue, std::atomic<int>& sum) {
     }
 }
 
-void testConcurrentQueueOperations() {
+void testMSQueueOperations() {
     msqueue queue;
     std::atomic<int> sum(0);
     std::vector<std::thread> threads;
@@ -129,11 +129,11 @@ void testConcurrentQueueOperations() {
         threads.push_back(std::thread(concurrentEnqueue, std::ref(queue), i));
     }
 
-    // Wait for all threads to complete
-    for (auto& t : threads) {
-        t.join();
-    }
-    threads.clear();  // Clear the vector of threads
+    // // Wait for all threads to complete
+    // for (auto& t : threads) {
+    //     t.join();
+    // }
+    // threads.clear();  // Clear the vector of threads
 
     // Start threads to perform concurrent dequeues
     for (int i = 0; i < 100; i++) {

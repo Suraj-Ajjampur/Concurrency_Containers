@@ -42,4 +42,5 @@ public:
 void push3_pop_till_empty(void);
 void push_pop(void);
 void testConcurrentPushPop();
+void treiber_stack_test(std::vector<int>& values, int numThreads);
 #endif

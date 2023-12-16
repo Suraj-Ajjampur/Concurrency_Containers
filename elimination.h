@@ -1,6 +1,6 @@
 /*****************************************************************
  * @author Suraj Ajjampur
- * @file   ts_elimination.h
+ * @file   elimination.h
  * 
  * @brief This C++ header file implements Trieber stack using the 
  *        elimination method in order to deal with contention issues.
@@ -8,8 +8,8 @@
  * @date 15 Dec 2023
 ********************************************************************/
 
-#ifndef TS_ELIMINATION_H
-#define TS_ELIMINATION_H
+#ifndef ELIMINATION_H
+#define ELIMINATION_H
 
 #include "my_atomics.h"
 #include <cstddef>  // for std::uintptr_t
@@ -19,6 +19,7 @@
 #include <random> // For random number generation
 #include <chrono>
 #include <thread>
+#include <list>
 
 class tstack_e {
 public:
@@ -61,8 +62,45 @@ public:
     }
 };
 
+class SGLStack_e {
+private:
+    std::mutex sgl;
+    std::list<int> q;
+
+    struct EliminationSlot {
+        std::atomic<int> value;
+        std::atomic<bool> active;
+        std::atomic<bool> isPush;
+
+        EliminationSlot() : value(0), active(false), isPush(false) {}
+    };
+
+    class EliminationArray {
+    public:
+        std::vector<EliminationSlot> slots;
+        const int size;
+        std::mt19937 rng; // Random number generator
+
+        EliminationArray(int size) : size(size), slots(size), rng(std::random_device{}()) {}
+
+        int getRandomSlotIndex() {
+            std::uniform_int_distribution<int> dist(0, size - 1);
+            return dist(rng);
+        }
+    };
+
+    EliminationArray eliminationArray;
+
+public:
+    SGLStack_e(int eliminationSize) : eliminationArray(eliminationSize) {}
+
+    void push(int val);
+    int pop();
+    bool tryElimination(int& val, bool isPush);
+};
+
 void test_ts_elimination(void);
+void treiber_stack_elimination_test(std::vector<int>& values, int numThreads);
+void sgl_stack_elimination_test(std::vector<int>& values, int numThreads);
 
-
-
-#endif //TS_ELIMINATION_H
+#endif //ELIMINATION_H
