@@ -1,4 +1,15 @@
+/********************************************************************
+ * @author Suraj Ajjampur
+ * @file sgl.cpp
+ * 
+ * @brief This source file implements a Stack and Queue to be used in a
+ * multithreaded application using a Single-Global Lock
+ * 
+ * @date 14 Dec 2023
+********************************************************************/
+
 #include "sgl.h"
+
 
 void SGLQueue::enqueue(int val) {
     std::lock_guard<std::mutex> lock(sgl);
@@ -83,8 +94,7 @@ void SGLStack::push(int val) {
 int SGLStack::pop() {
     std::lock_guard<std::mutex> lock(sgl);
     if (q.empty()) {
-        // Handle empty queue, e.g., throw an exception or return a special value
-        return -1;  // Example: return -1 to indicate an empty queue
+        return -1;  //return -1 to indicate an empty queue
     }
     int ret = q.back();
     q.pop_back();

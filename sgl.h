@@ -1,3 +1,13 @@
+/********************************************************************
+ * @author Suraj Ajjampur
+ * @file sgl.h
+ * 
+ * @brief This header file implements a Stack and Queue classes to be used 
+ * in a multithreaded application using a Single-Global Lock
+ * 
+ * @date 14 Dec 2023
+********************************************************************/
+
 #ifndef SGL_H
 #define SGL_H
 
@@ -5,6 +15,7 @@
 #include <mutex>
 #include <list>
 #include <assert.h>
+
 
 class SGLQueue{
     private:

@@ -3,7 +3,7 @@ CFLAGS = -pthread -O0 -std=c++2a -mcx16
 
 TARGET = containers
 
-SOURCES = main.cpp trieber_stack.cpp msq.cpp my_atomics.cpp sgl.cpp
+SOURCES = main.cpp trieber_stack.cpp msq.cpp my_atomics.cpp sgl.cpp ts_elimination.cpp
 OBJECTS = $(SOURCES:.cpp=.o)
 
 # Default rule to build all executables

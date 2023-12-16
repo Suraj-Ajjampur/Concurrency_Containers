@@ -11,6 +11,7 @@
 #include "trieber_stack.h"
 #include "msq.h"
 #include "sgl.h"
+#include "ts_elimination.h"
 #include <iostream>
 
 /********Entry point of the program ************/
@@ -28,6 +29,8 @@ int main(void){
 
     testBasicSGLStackOperations();
     testConcurrentSGLStackOperations();
+
+    test_ts_elimination();
     /*********** Testing for MSQueue here **********************/
     
     /************ Elimination here *****************************/

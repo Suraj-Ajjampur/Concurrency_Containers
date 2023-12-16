@@ -1,14 +1,16 @@
-/** 
+/*****************************************************************
+ * @author Suraj Ajjampur
+ * @file   trieber_stack.cpp
  * 
- */ 
-// Includes
-
-// ABA problem during garbage collection
-
-//Races through Reclaimation
-//Reusing nodes might cause data races -- When the top->val might be reincarnated as a different type
-
-//WE need to do a type presevind memory allocation
+ * @brief This C++ source file implements Trieber stack which is a 
+ * non-blocking data structure. It is linearizable and lock-free
+ * 
+ * Garbage Collection Issues currently dealt with 
+ * 1) Race against reclaimation - Done 
+ * 2) ABA problem - To-do
+ * 
+ * @date 14 Dec 2023
+********************************************************************/
 
 #include <cstddef>  // for std::uintptr_t
 #include "trieber_stack.h"
