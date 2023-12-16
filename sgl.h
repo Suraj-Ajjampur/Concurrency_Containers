@@ -15,7 +15,7 @@
 #include <mutex>
 #include <list>
 #include <assert.h>
-
+#include <numeric>
 
 class SGLQueue{
     private:
@@ -42,5 +42,8 @@ void testConcurrentSGLQueueOperations();
 
 void testBasicSGLStackOperations();
 void testConcurrentSGLStackOperations();
+
+void sgl_stack_test(std::vector<int>& values, int numThreads);
+void sgl_queue_test(std::vector<int>& values, int numThreads);
 
 #endif

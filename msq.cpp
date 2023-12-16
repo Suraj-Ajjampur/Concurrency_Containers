@@ -10,6 +10,7 @@
 
 #include "msq.h"
 #include <mutex>
+#include <numeric>
 
 mutex lock;
 
@@ -107,14 +108,14 @@ void testBasicQueueOperations() {
 
 void concurrentEnqueue(msqueue& queue, int val) {
     queue.enqueue(val);
-    cout << "Enqued value is " << val << endl;
+    DEBUG_MSG("Enqued value is " << val);
 }
 
 void concurrentDequeue(msqueue& queue, std::atomic<int>& sum) {
     int val = queue.dequeue();
 
     if (val != -1) {
-        cout << "dequed value is " << val << endl;
+        DEBUG_MSG("dequed value is " << val);
         sum.fetch_add(val, SEQ_CST);
     }
 }
@@ -151,4 +152,46 @@ void testMSQueueOperations() {
     assert(sum == 5050);
 
     std::cout << "Test Concurrent Queue Operations: Passed" << std::endl;
+}
+
+void ms_queue_test(std::vector<int>& values, int numThreads) {
+    msqueue queue;
+    std::atomic<int> sum(0);
+    std::vector<std::thread> threads;
+
+    int halfNumThreads = numThreads / 2;
+
+    // Concurrent enqueues
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&queue, &values, i, halfNumThreads]() {
+            for (size_t j = i; j < values.size(); j += halfNumThreads) {
+                concurrentEnqueue(queue, values[j]);
+            }
+        }));
+    }
+
+    // Concurrent dequeues
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&queue, &sum, i, halfNumThreads, &values]() {
+            for (size_t j = i; j < values.size(); j += halfNumThreads) {
+                concurrentDequeue(queue, sum);
+            }
+        }));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    // Calculate the expected sum of the vector
+    int expectedSum = std::accumulate(values.begin(), values.end(), 0);
+
+    // Check if the sum of dequeued values is correct
+    if (sum != expectedSum) {
+        std::cerr << "Error: The sum of dequeued values does not match the expected sum." << std::endl;
+        std::cerr << "Sum: " << sum << ", Expected: " << expectedSum << std::endl;
+    } else {
+        std::cout << "Test for M&S queue passed !" << std::endl;
+    }
 }

@@ -22,5 +22,6 @@ public:
 
 void testBasicQueueOperations();
 void testMSQueueOperations();
+void ms_queue_test(std::vector<int>& values, int numThreads);
 
 #endif //MSQ_H

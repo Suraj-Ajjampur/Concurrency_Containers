@@ -2,7 +2,7 @@
  * @author Suraj Ajjampur
  * @file   elimination.cpp
  * 
- * @brief This C++ source file implements Trieber stack using the 
+ * @brief This C++ source file implements stacks using the 
  *        elimination method in order to deal with contention issues.
  * 
  * @date 15 Dec 2023

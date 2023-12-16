@@ -77,30 +77,30 @@ void DS_Wrapper(const string& inputFile, const string& data_structure, const str
     // Start measuring time
     auto start_time = chrono::high_resolution_clock::now();
 
-    // Sort the vector based on the selected Data Structure
+    // Call the appropriate test function based on the Container and Optimization Specified
     if (data_structure == "SGLQueue") {
-        testConcurrentSGLQueueOperations();
-        return;
+         if (optimization == "none"){
+            sgl_queue_test(numbers,NUM_THREADS);
+         }else if(optimization == "Flat-combining"){
+            cout << "Not implemented yet" << endl;    // Call SGL Stack Test with Flat-Combining
+        }
     } else if (data_structure == "SGLStack") {
         if (optimization == "none"){
-            treiber_stack_test(numbers, NUM_THREADS); // Call SGL Stack with no optimization
+            sgl_stack_test(numbers, NUM_THREADS); // Call SGL Stack with no optimization
         }else if(optimization == "Elimination"){
             sgl_stack_elimination_test(numbers,NUM_THREADS);                    // Call SGL Stack Test with Elimination 
         }else if(optimization == "Flat-combining"){
             cout << "Not implemented yet" << endl;    // Call SGL Stack Test with Flat-Combining
         }
-        return;
     } else if (data_structure == "TS") {
         if (optimization == "none"){
             treiber_stack_test(numbers, NUM_THREADS); // Call the mergesort function
         }else if(optimization == "Elimination"){
             treiber_stack_elimination_test(numbers, NUM_THREADS);
-        }else if(optimization == "Flat-combining"){
-            cout << "Not implemented yet" << endl;
         }
+
     } else if (data_structure == "msqueue") {
-        testMSQueueOperations();
-        return;
+        ms_queue_test(numbers,NUM_THREADS);
     } else {
         cerr << "Error: Invalid data_structure specified." << endl;
         return;
@@ -110,7 +110,7 @@ void DS_Wrapper(const string& inputFile, const string& data_structure, const str
     auto duration = chrono::duration_cast<chrono::nanoseconds>(end_time - start_time);
 
     // Calculate and print elapsed time in nanoseconds
-    cout << "Time taken: " << duration.count() << " nanoseconds" << endl;
+    cout << "\033[1mTime taken: \033[32m" << duration.count() << " nanoseconds\033[0m" << endl;
 }
 
 /**

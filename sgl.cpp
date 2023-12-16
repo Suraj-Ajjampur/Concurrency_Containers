@@ -64,6 +64,50 @@ void testConcurrentSGLQueueOperations() {
     std::cout << "Test Concurrent SGL Queue Operations: Passed" << std::endl;
 }
 
+void sgl_queue_test(std::vector<int>& values, int numThreads) {
+    SGLQueue queue;
+    std::atomic<int> sum(0);
+    std::vector<std::thread> threads;
+
+    int halfNumThreads = numThreads / 2;
+
+    // Concurrent enqueues
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&queue, &values, i, halfNumThreads]() {
+            for (size_t j = i; j < values.size(); j += halfNumThreads) {
+                concurrentSGLQueueEnqueue(queue, values[j]);
+            }
+        }));
+    }
+
+    // Concurrent dequeues
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&queue, &sum, i, halfNumThreads, &values]() {
+            for (size_t j = i; j < values.size(); j += halfNumThreads) {
+                concurrentSGLQueueDequeue(queue, sum);
+            }
+        }));
+    }
+
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    // Calculate the expected sum of the vector
+    int expectedSum = std::accumulate(values.begin(), values.end(), 0);
+
+    // Check if the sum of dequeued values is correct
+    if (sum != expectedSum) {
+        std::cerr << "Error: The sum of dequeued values does not match the expected sum." << std::endl;
+        std::cerr << "Sum: " << sum << ", Expected: " << expectedSum << std::endl;
+    } else {
+        std::cout << "Test for SGL queue passed with no optimization" << std::endl;
+    }
+}
+
+
+
 void testBasicSGLQueueOperations() {
     SGLQueue queue;
 
@@ -137,6 +181,48 @@ void testConcurrentSGLStackOperations() {
 
     std::cout << "Test Concurrent SGL Stack Operations: Passed" << std::endl;
 }
+
+void sgl_stack_test(std::vector<int>& values, int numThreads) {
+    SGLStack stack;
+    std::atomic<int> popCount(0);
+    std::vector<std::thread> threads;
+
+    int halfNumThreads = numThreads / 2;
+
+    // Concurrent pushes
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
+            for (int j = i; j < values.size(); j += halfNumThreads) {
+                concurrentSGLStackPush(stack, values[j]);
+            }
+        }));
+    }
+
+    #ifdef DEBUG_MODE
+    DEBUG_MSG("Begin Pop");
+    #endif
+
+    // Concurrent pops
+    for (int i = 0; i < halfNumThreads; ++i) {
+        threads.push_back(std::thread([&stack, &popCount, i, halfNumThreads, &values]() {
+            for (int j = i; j < values.size(); j += halfNumThreads) {
+                concurrentSGLStackPop(stack, popCount);
+            }
+        }));
+    }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+
+    if (popCount.load(RELAXED) != values.size()) {
+        std::cerr << "Error: The number of successful pops does not match the number of pushes." << std::endl;
+        std::cerr << "Pops: " << popCount << ", Pushes: " << values.size() << std::endl;
+    } else {
+        std::cout << "Test for SGL stack passed with no optimization" << std::endl;
+    }
+}
+
 
 
 
