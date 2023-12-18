@@ -21,6 +21,16 @@ int get_thread_index() {
 // Example thread-local index assignment (requires further implementation):
 thread_local int thread_index = get_thread_index();
 
+/**
+ * @brief Enqueues a value into the queue using flat combining optimization.
+ *
+ * This method stores the value in the combining array and sets its status to pending.
+ * It then attempts to acquire a lock. If the lock is not acquired, the operation
+ * is deferred to be combined with others. If the lock is acquired without contention,
+ * the combining operation is executed immediately.
+ *
+ * @param val The value to be enqueued.
+ */
 void SGLQueue_FC::enqueue(int val) {
     DEBUG_MSG("Enqueue called with value: " << val);
     combiningArray[thread_index].value.store(val, std::memory_order_relaxed);
@@ -39,6 +49,16 @@ void SGLQueue_FC::enqueue(int val) {
     }
 }
 
+/**
+ * @brief Dequeues a value from the queue using flat combining optimization.
+ *
+ * This method sets the dequeue operation in the combining array as pending.
+ * It acquires a lock and waits for the operation to be completed by the combiner thread.
+ * Once the operation is completed, the dequeued value (or a sentinel value indicating
+ * an empty queue) is returned.
+ *
+ * @return The value dequeued from the queue, or a sentinel value if the queue is empty.
+ */
 int SGLQueue_FC::dequeue() {
     DEBUG_MSG("Dequeue called");
     combiningArray[thread_index].pending.store(true, std::memory_order_release);
@@ -60,6 +80,16 @@ int SGLQueue_FC::dequeue() {
     return retValue;
 }
 
+/**
+ * @brief Combines pending operations in the queue.
+ *
+ * This method iterates through the combining array and performs any pending operations
+ * (enqueue or dequeue). Once an operation is executed, it is marked as completed,
+ * and any threads waiting on this operation are notified.
+ *
+ * @note This method should be called by a thread that successfully acquires the lock
+ *       on the queue to ensure exclusive access while combining operations.
+ */
 void SGLQueue_FC::combine() {
     DEBUG_MSG("Combining operations");
     //std::lock_guard<std::mutex> lock(sgl); // Ensure exclusive access
@@ -151,6 +181,13 @@ for (int i = 0; i < halfNumThreads; ++i) {
     }
 }
 
+/**
+ * @brief Combines pending stack operations in the flat combining array.
+ *
+ * Iterates through the combining array and performs any pending push or pop operations.
+ * After an operation is executed, it is marked as completed. Notifies all waiting threads
+ * after completing all operations.
+ */
 void SGLStack_FC::combine() {
     for (auto& op : combiningArray) {
         if (op.pending.load() && !op.completed.load()) {
@@ -171,6 +208,15 @@ void SGLStack_FC::combine() {
     cv.notify_all();
 }
 
+/**
+ * @brief Pushes a value onto the stack using flat combining optimization.
+ *
+ * Stores the value and push operation in the combining array for the current thread.
+ * Attempts to acquire a lock to combine operations. If the lock is already owned,
+ * combines the operations immediately; otherwise, waits until the push operation is completed.
+ *
+ * @param val The value to be pushed onto the stack.
+ */
 void SGLStack_FC::push(int val) {
     int thread_index = get_thread_index();  // Implement this function to assign unique index to each thread
     auto& op = combiningArray[thread_index];
@@ -187,6 +233,15 @@ void SGLStack_FC::push(int val) {
     }
 }
 
+/**
+ * @brief Pops a value from the stack using flat combining optimization.
+ *
+ * Sets a pop operation in the combining array for the current thread.
+ * Attempts to acquire a lock to combine operations. If the lock is already owned,
+ * combines the operations immediately; otherwise, waits until the pop operation is completed.
+ *
+ * @return The value popped from the stack, or -1 if the stack was empty.
+ */
 int SGLStack_FC::pop() {
     int thread_index = get_thread_index();  // Implement this function to assign unique index to each thread
     auto& op = combiningArray[thread_index];
@@ -204,6 +259,16 @@ int SGLStack_FC::pop() {
     return op.value.load();  // Return the value popped or -1 if stack was empty
 }
 
+/**
+ * @brief Tests the SGL stack with flat combining optimization using a set of values and multiple threads.
+ *
+ * This function creates threads for concurrent push and pop operations on an SGL stack with flat combining.
+ * Each thread either pushes or pops values to/from the stack. After all operations are completed, additional
+ * checks or verifications can be performed.
+ *
+ * @param values A vector of integers to be pushed onto the stack.
+ * @param numThreads The total number of threads to be used for concurrent push and pop operations.
+ */
 void sgl_stack_fc_test(std::vector<int>& values, int numThreads) {
     SGLStack_FC stack(values.size());  // Assuming the max concurrency level is the size of the values vector
     std::vector<std::thread> threads;

@@ -120,40 +120,19 @@ void concurrentDequeue(msqueue& queue, std::atomic<int>& sum) {
     }
 }
 
-void testMSQueueOperations() {
-    msqueue queue;
-    std::atomic<int> sum(0);
-    std::vector<std::thread> threads;
-
-    // Start threads to perform concurrent enqueues
-    for (int i = 1; i <= 100; i++) {
-        threads.push_back(std::thread(concurrentEnqueue, std::ref(queue), i));
-    }
-
-    // // Wait for all threads to complete
-    // for (auto& t : threads) {
-    //     t.join();
-    // }
-    // threads.clear();  // Clear the vector of threads
-
-    // Start threads to perform concurrent dequeues
-    for (int i = 0; i < 100; i++) {
-        threads.push_back(std::thread(concurrentDequeue, std::ref(queue), std::ref(sum)));
-    }
-
-    // Wait for all threads to complete
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    cout << sum << endl;
-
-    // Check if the sum of dequeued values is correct
-    assert(sum == 5050);
-
-    std::cout << "Test Concurrent Queue Operations: Passed" << std::endl;
-}
-
+/**
+ * @brief Tests the M&S lock-free queue with a given set of values and a specified number of threads.
+ * 
+ * This function performs concurrent enqueues and dequeues on an M&S queue using multiple threads. The number of
+ * threads is divided equally between enqueue and dequeue operations. It validates the test by comparing the sum
+ * of dequeued values against the expected sum calculated from the input values.
+ * 
+ * @param values A vector of integers to be enqueued into the queue.
+ * @param numThreads The total number of threads to be used for concurrent enqueue and dequeue operations.
+ * 
+ * @note The function asserts if the sum of dequeued values does not match the expected sum, indicating an issue
+ *       with the queue's concurrent operation handling.
+ */
 void ms_queue_test(std::vector<int>& values, int numThreads) {
     msqueue queue;
     std::atomic<int> sum(0);

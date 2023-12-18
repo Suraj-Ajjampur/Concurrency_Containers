@@ -70,8 +70,6 @@ int tstack::pop(void){
     return v; // Return the value of the popped node
 }
 
-
-
 void Push(tstack& stack, int val) {
     stack.push(val);
 }

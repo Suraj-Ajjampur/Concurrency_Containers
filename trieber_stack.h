@@ -30,10 +30,6 @@ public:
     };
     atomic<node*> top; // Now an atomic cnt_ptr, not just a pointer to node
 
-    // struct alignas(16) top {
-    //     std::atomic<uintptr_t> ptrAndCnt; // Combined atomic pointer and counter
-    // };
-
     void push(int val); 
     int pop();
 };
