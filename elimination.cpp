@@ -155,40 +155,56 @@ void Pop(tstack_e& stack, std::atomic<int>& popCount) {
 void treiber_stack_elimination_test(std::vector<int>& values, int numThreads) {
     tstack_e stack(ELIMINATION_ARRAY_SIZE);
     std::atomic<int> popCount(0);
-    std::vector<std::thread> threads;
 
-    // Half the threads for pushing, half for popping
-    int halfNumThreads = numThreads / 2;
+    if (numThreads > 1) {
+        std::vector<std::thread> threads;
+        int halfNumThreads = numThreads / 2;
 
-    // Create threads to perform concurrent pushes
-    for (int i = 0; i < halfNumThreads; ++i) {
-        threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
-            for (int j = i; j < values.size(); j += halfNumThreads) {
-                Push(stack, values[j]);
-            }
-        }));
-    }
+        // Concurrent pushes
+        for (int i = 0; i < halfNumThreads; ++i) {
+            threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
+                for (int j = i; j < values.size(); j += halfNumThreads) {
+                    Push(stack, values[j]);
+                }
+            }));
+        }
 
-    DEBUG_MSG("Begin Pop");
-    // Create threads to perform concurrent pops
-    for (int i = 0; i < values.size(); ++i) {
-        threads.push_back(std::thread(Pop, std::ref(stack), std::ref(popCount)));
-    }
+        // Wait for push threads to complete
+        for (auto& t : threads) {
+            t.join();
+        }
+        threads.clear();
 
-    // Wait for all threads to complete
-    for (auto& t : threads) {
-        t.join();
+        // Concurrent pops
+        for (int i = 0; i < halfNumThreads; ++i) {
+            threads.push_back(std::thread([&stack, &popCount]() {
+                Pop(stack, popCount);
+            }));
+        }
+
+        // Wait for pop threads to complete
+        for (auto& t : threads) {
+            t.join();
+        }
+    } else {
+        // Single-threaded push and pop
+        for (const auto& value : values) {
+            Push(stack, value); // Push all values
+        }
+        for (size_t i = 0; i < values.size(); ++i) {
+            Pop(stack, popCount); // Pop all values
+        }
     }
 
     // Check if the number of successful pops matches the number of pushes
-    if (popCount.load(RELAXED) != values.size()) {
+    if (popCount.load(std::memory_order_relaxed) != values.size()) {
         std::cerr << "Error: The number of successful pops does not match the number of pushes." << std::endl;
         std::cerr << "Pops: " << popCount << ", Pushes: " << values.size() << std::endl;
-        // Handle error
     } else {
-        std::cout << "Test for Treiber stack passed with Elimination optimization" << std::endl;
+        std::cout << "Test for Treiber stack with Elimination optimization passed" << std::endl;
     }
 }
+
 
 
 void SGLStack_e::push(int val) {

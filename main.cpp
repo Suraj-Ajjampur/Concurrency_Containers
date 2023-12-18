@@ -87,10 +87,10 @@ void DS_Wrapper(const string& inputFile, const string& data_structure, const str
     }
     // Stop measuring time
     auto end_time = chrono::high_resolution_clock::now();
-    auto duration = chrono::duration_cast<chrono::nanoseconds>(end_time - start_time);
+    auto duration = chrono::duration_cast<chrono::microseconds>(end_time - start_time);
 
     // Calculate and print elapsed time in nanoseconds
-    cout << "\033[1mTime taken: \033[32m" << duration.count() << " nanoseconds\033[0m" << endl;
+    cout << "\033[1mTime taken: \033[32m" << duration.count() << " microseconds\033[0m" << endl;
 }
 
 /**

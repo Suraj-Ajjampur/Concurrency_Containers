@@ -154,28 +154,31 @@ void treiber_stack_test(std::vector<int>& values, int numThreads) {
     std::atomic<int> popCount(0);
     std::vector<std::thread> threads;
 
-    // Half the threads for pushing, half for popping
-    int halfNumThreads = numThreads / 2;
+    if (numThreads > 1) {
+        // Concurrent pushes and pops with multiple threads
+        int halfNumThreads = numThreads / 2;
 
-    // Create threads to perform concurrent pushes
-    for (int i = 0; i < halfNumThreads; ++i) {
-        threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
-            for (int j = i; j < values.size(); j += halfNumThreads) {
-                Push(stack, values[j]);
-            }
-        }));
-    }
+        // Push threads
+        for (int i = 0; i < halfNumThreads; ++i) {
+            threads.push_back(std::thread([&stack, &values, i, halfNumThreads]() {
+                for (int j = i; j < values.size(); j += halfNumThreads) {
+                    Push(stack, values[j]);
+                }
+            }));
+        }
 
-    // // Wait for all threads to complete
-    // for (auto& t : threads) {
-    //     t.join();
-    // }
-    // threads.clear();  // Clear the vector of threads
-
-    DEBUG_MSG("Begin Pop");
-    // Create threads to perform concurrent pops
-    for (int i = 0; i < values.size(); ++i) {
-        threads.push_back(std::thread(Pop, std::ref(stack), std::ref(popCount)));
+        // Pop threads
+        for (int i = 0; i < halfNumThreads; ++i) {
+            threads.push_back(std::thread([&stack, &popCount]() {
+                Pop(stack, popCount);
+            }));
+        }
+    } else {
+        // Single thread performs both push and pop
+        for (const auto& value : values) {
+            Push(stack, value);
+            Pop(stack, popCount);
+        }
     }
 
     // Wait for all threads to complete
@@ -187,9 +190,9 @@ void treiber_stack_test(std::vector<int>& values, int numThreads) {
     if (popCount.load(RELAXED) != values.size()) {
         std::cerr << "Error: The number of successful pops does not match the number of pushes." << std::endl;
         std::cerr << "Pops: " << popCount << ", Pushes: " << values.size() << std::endl;
-        // Handle error
     } else {
-        std::cout << "Test for Treiber stack passed with no optimization" << std::endl;
+        std::cout << "Test for Treiber stack passed" << std::endl;
     }
 }
+
 
