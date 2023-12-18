@@ -3,7 +3,7 @@
  * @file sgl.cpp
  * 
  * @brief This source file implements a Stack and Queue to be used in a
- * multithreaded application using a Single-Global Lock
+ * multithreaded application using a Single-Global Lock.
  * 
  * @date 14 Dec 2023
 ********************************************************************/

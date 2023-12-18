@@ -15,13 +15,14 @@
 #include <iostream>
 #include <getopt.h>
 #include <fstream>
+#include "flat_combining.h"
 
 using namespace std;
 
 // Global variables
 int NUM_THREADS = 5;
 string data_structure = ""; 
-string optimization = "none";
+string optimization = "";
 string inputFile = "";
 
 
@@ -29,29 +30,6 @@ string inputFile = "";
 void printName() {
     cout << "Suraj Ajjampur" << endl;
 }
-
-// /********Entry point of the program ************/
-// int main(void){
-//     push3_pop_till_empty();
-//     push_pop();
-
-//     testConcurrentPushPop();
-
-//     testBasicQueueOperations();
-//     testMSQueueOperations();
-    
-//     testBasicSGLQueueOperations();
-//     testConcurrentSGLQueueOperations();
-
-//     testBasicSGLStackOperations();
-//     testConcurrentSGLStackOperations();
-
-//     test_ts_elimination();
-//     /*********** Testing for MSQueue here **********************/
-    
-//     /************ Elimination here *****************************/
-//     return 0;
-// }
 
 // Function to sort integers in a file and print to another file
 void DS_Wrapper(const string& inputFile, const string& data_structure, const string &optimization, int NUM_THREADS) {
@@ -82,22 +60,24 @@ void DS_Wrapper(const string& inputFile, const string& data_structure, const str
          if (optimization == "none"){
             sgl_queue_test(numbers,NUM_THREADS);
          }else if(optimization == "Flat-combining"){
-            cout << "Not implemented yet" << endl;    // Call SGL Stack Test with Flat-Combining
-        }
+            sgl_queue_fc_test(numbers, NUM_THREADS);    // Call SGL Stack Test with Flat-Combining
+        }else{cout << "Invalid optimization Selected " << endl; return;} 
     } else if (data_structure == "SGLStack") {
         if (optimization == "none"){
             sgl_stack_test(numbers, NUM_THREADS); // Call SGL Stack with no optimization
         }else if(optimization == "Elimination"){
             sgl_stack_elimination_test(numbers,NUM_THREADS);                    // Call SGL Stack Test with Elimination 
-        }else if(optimization == "Flat-combining"){
-            cout << "Not implemented yet" << endl;    // Call SGL Stack Test with Flat-Combining
-        }
-    } else if (data_structure == "TS") {
+        }else if (optimization == "Flat-combining"){
+            sgl_stack_fc_test(numbers, NUM_THREADS);
+        }    
+        else{cout << "Invalid optimization Selected " << endl; return;} 
+    }
+     else if (data_structure == "TS") {
         if (optimization == "none"){
             treiber_stack_test(numbers, NUM_THREADS); // Call the mergesort function
         }else if(optimization == "Elimination"){
             treiber_stack_elimination_test(numbers, NUM_THREADS);
-        }
+        }else{cout << "Invalid optimization Selected " << endl; return;} 
 
     } else if (data_structure == "msqueue") {
         ms_queue_test(numbers,NUM_THREADS);
@@ -162,7 +142,7 @@ int main(int argc, char* argv[]) {
         {"threads", required_argument, 0, 't'},
         {"input", required_argument, 0, 'i'},
         {"data_structure", required_argument, 0, 'd'},
-        {"optimization", required_argument, 0, 'i'},
+        {"optimization", required_argument, 0, 'o'},
         {0, 0, 0, 0}
     };
     
@@ -222,7 +202,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    DEBUG_MSG("Algorthm Selected is " << data_structure);
+    DEBUG_MSG("Data-Structure Selected is " << data_structure);
     DEBUG_MSG("Inputfile Selected is " << inputFile);
     DEBUG_MSG("Optimization Selected is " << optimization);
     DEBUG_MSG("Numthreads Selected is " << NUM_THREADS);

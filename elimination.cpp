@@ -290,6 +290,12 @@ void sgl_stack_elimination_test(std::vector<int>& values, int numThreads) {
     DEBUG_MSG("Begin Pop");
     #endif
 
+    // Wait for all threads to complete
+    for (auto& t : threads) {
+        t.join();
+    }
+    threads.clear(); // Clear the threads vector after join
+
     // Concurrent pops
     for (int i = 0; i < halfNumThreads; ++i) {
         threads.push_back(std::thread([&stack, &popCount, i, halfNumThreads, &values]() {

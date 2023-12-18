@@ -8,7 +8,7 @@
  * 
  * @date 24 Oct 2023
  * 
- * @assignment Concurrent Programming Fall 2023 (Lab 2)
+ * @assignment Concurrent Programming Fall 2023 (Final Project)
 ********************************************************************/
 
 #ifndef MY_ATOMICS_H
