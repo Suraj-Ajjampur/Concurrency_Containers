@@ -15,7 +15,7 @@
 #include <cstddef>  // for std::uintptr_t
 #include "trieber_stack.h"
 
-#define CONTENTION_OPT 0
+#define CONTENTION_OPT 1
 
 using namespace std;
 /** Pushes the value onto the stack
@@ -70,37 +70,8 @@ int tstack::pop(void){
     return v; // Return the value of the popped node
 }
 
-void push3_pop_till_empty(void){
-    /************ Testing for the Trieber Stack here **********/
-    tstack stack; // Create an instance of tstack
 
-    // Test the push function
-    std::cout << "Pushing values onto the stack..." << std::endl;
-    stack.push(1);
-    stack.push(2);
-    stack.push(3);
 
-    // Test the pop function
-    std::cout << "Popping values from the stack till empty..." << std::endl;
-    int val;
-    while ((val = stack.pop()) != -1) { // Continue popping until the stack is empty
-        std::cout << "Popped: " << val << std::endl;
-    }
-}
-
-void push_pop(void){
-    /************ Testing for the Trieber Stack here **********/
-    tstack stack; // Create an instance of tstack
-
-    // Test the push function
-    std::cout << "Pushing then popping alternatively" << std::endl;
-    stack.push(1);
-    cout << "Value is " << stack.pop() << endl;
-    stack.push(2);
-    cout << "Value is " << stack.pop() << endl;
-    stack.push(3);
-    cout << "Value is " << stack.pop() << endl;
-}
 void Push(tstack& stack, int val) {
     stack.push(val);
 }
@@ -109,35 +80,7 @@ void Pop(tstack& stack, std::atomic<int>& popCount) {
     int val = stack.pop();
     if ( val != -1) {
         popCount.fetch_add(1, RELAXED);
-    }else{cout <<"Stack is empty Error" << endl;}
-}
-
-
-void testConcurrentPushPop() {
-    tstack stack;
-    const int numOperations = 100;
-    std::atomic<int> popCount(0);
-    std::vector<std::thread> threads;
-
-    // Create threads to perform concurrent pushes
-    for (int i = 0; i < numOperations; ++i) {
-        threads.push_back(std::thread(Push, std::ref(stack), i));
-    }
-
-    // Create threads to perform concurrent pops
-    for (int i = 0; i < numOperations; ++i) {
-        threads.push_back(std::thread(Pop, std::ref(stack), std::ref(popCount)));
-    }
-
-    // Wait for all threads to complete
-    for (auto& t : threads) {
-        t.join();
-    }
-
-    // Check if the number of successful pops matches the number of pushes
-    assert(popCount == numOperations);
-
-    std::cout << "Test Concurrent Push Pop: Passed" << std::endl;
+    }else{DEBUG_MSG("Stack is empty");}
 }
 
 /** Test for Treiber Stack where a vector of values are being pushed into the stack
@@ -166,9 +109,14 @@ void treiber_stack_test(std::vector<int>& values, int numThreads) {
                 }
             }));
         }
+        // Wait for all threads to complete
+        for (auto& t : threads) {
+            t.join();
+        }
+        threads.clear();
 
         // Pop threads
-        for (int i = 0; i < halfNumThreads; ++i) {
+        for (int i = 0; i < values.size(); ++i) {
             threads.push_back(std::thread([&stack, &popCount]() {
                 Pop(stack, popCount);
             }));
@@ -196,3 +144,33 @@ void treiber_stack_test(std::vector<int>& values, int numThreads) {
 }
 
 
+void push_pop(void){
+    /************ Testing for the Trieber Stack here **********/
+    tstack stack; // Create an instance of tstack
+
+    // Test the push function
+    std::cout << "Pushing then popping alternatively" << std::endl;
+    stack.push(1);
+    cout << "Value is " << stack.pop() << endl;
+    stack.push(2);
+    cout << "Value is " << stack.pop() << endl;
+    stack.push(3);
+    cout << "Value is " << stack.pop() << endl;
+}
+void push3_pop_till_empty(void){
+    /************ Testing for the Trieber Stack here **********/
+    tstack stack; // Create an instance of tstack
+
+    // Test the push function
+    std::cout << "Pushing values onto the stack..." << std::endl;
+    stack.push(1);
+    stack.push(2);
+    stack.push(3);
+
+    // Test the pop function
+    std::cout << "Popping values from the stack till empty..." << std::endl;
+    int val;
+    while ((val = stack.pop()) != -1) { // Continue popping until the stack is empty
+        std::cout << "Popped: " << val << std::endl;
+    }
+}

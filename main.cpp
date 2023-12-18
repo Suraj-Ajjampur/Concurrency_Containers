@@ -31,7 +31,21 @@ void printName() {
     cout << "Suraj Ajjampur" << endl;
 }
 
-// Function to sort integers in a file and print to another file
+/**
+ * @brief Executes a test for the specified data structure with a given optimization strategy using input from a file.
+ * 
+ * This function reads integers from an input file and uses them to test different data structures (e.g., queues and stacks) 
+ * with specified optimization techniques. The function supports Single Global Lock Queue (SGLQueue), Single Global Lock Stack (SGLStack), 
+ * Treiber Stack (TS), and Michael & Scott Queue (msqueue) as data structures. It measures the execution time of the test in microseconds.
+ * 
+ * @param inputFile The path of the input file containing integers.
+ * @param data_structure The data structure to be tested. Supported values are "SGLQueue", "SGLStack", "TS", and "msqueue".
+ * @param optimization The optimization strategy to be applied. Supported optimizations are "none", "Elimination", and "Flat-combining".
+ * @param NUM_THREADS The number of threads to be used in the test.
+ * 
+ * @note If an invalid data structure or optimization is specified, the function will print an error message and return.
+ *       If the input file cannot be opened, the function will also return after printing an error message.
+ */
 void DS_Wrapper(const string& inputFile, const string& data_structure, const string &optimization, int NUM_THREADS) {
     // Open the input file
     ifstream inFile(inputFile);

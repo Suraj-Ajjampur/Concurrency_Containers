@@ -149,7 +149,7 @@ void Pop(tstack_e& stack, std::atomic<int>& popCount) {
     int val = stack.pop();
     if ( val != -1) {
         popCount.fetch_add(1, RELAXED);
-    }else{cout <<"Stack is empty Error" << endl;}
+    }else{DEBUG_MSG("Stack is empty");}
 }
 
 void treiber_stack_elimination_test(std::vector<int>& values, int numThreads) {
@@ -176,7 +176,7 @@ void treiber_stack_elimination_test(std::vector<int>& values, int numThreads) {
         threads.clear();
 
         // Concurrent pops
-        for (int i = 0; i < halfNumThreads; ++i) {
+        for (int i = 0; i <  values.size(); ++i) {
             threads.push_back(std::thread([&stack, &popCount]() {
                 Pop(stack, popCount);
             }));

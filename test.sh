@@ -7,7 +7,7 @@ make clean && clear && make
 
 input_file="input_test_files/256in1-10000.txt"
 data_structures=("SGLQueue" "SGLStack" "TS" "msqueue")
-thread_counts=(1 5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100)
+thread_counts=(2 5 10 20 25 30 35 40 45 50 55 60 65 70 75 80 85 90 95 100)
 
 # Loop through data structures
 for data_structure in "${data_structures[@]}"; do
